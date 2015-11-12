@@ -2,4 +2,6 @@ package expressarduino
 
 import "testing"
 
-// TODO
+func TestNewConnection(t *testing.T) {
+    t.Skip("TODO")
+}
