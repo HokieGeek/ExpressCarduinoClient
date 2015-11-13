@@ -1,7 +1,7 @@
-package expressarduino
+package connection
 
 import "testing"
 
 func TestNewConnection(t *testing.T) {
-    t.Skip("TODO")
+	t.Skip("TODO")
 }
