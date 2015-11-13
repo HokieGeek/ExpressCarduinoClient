@@ -1,5 +1,5 @@
-# ExpressCarduinoClient
+# ExpressCarduinoDaemon
 
-[![Build Status](https://travis-ci.org/HokieGeek/ExpressCarduinoClient.svg?branch=master)](https://travis-ci.org/HokieGeek/ExpressCarduinoClient) [![Coverage](http://gocover.io/_badge/github.com/HokieGeek/ExpressCarduinoClient/core?0)](http://gocover.io/github.com/HokieGeek/ExpressCarduinoClient/core) [![GoDoc](http://godoc.org/github.com/hokiegeek/ExpressCarduinoClient/core?status.png)](http://godoc.org/github.com/hokiegeek/ExpressCarduinoClient/core)
+[![Build Status](https://travis-ci.org/HokieGeek/ExpressCarduinoDaemon.svg?branch=master)](https://travis-ci.org/HokieGeek/ExpressCarduinoDaemon) [![Coverage](http://gocover.io/_badge/github.com/HokieGeek/ExpressCarduinoDaemon/core?0)](http://gocover.io/github.com/HokieGeek/ExpressCarduinoDaemon/core) [![GoDoc](http://godoc.org/github.com/hokiegeek/ExpressCarduinoDaemon/core?status.png)](http://godoc.org/github.com/hokiegeek/ExpressCarduinoDaemon/core)
 
 Go program to interface to the ExpressCarduino serial connection
