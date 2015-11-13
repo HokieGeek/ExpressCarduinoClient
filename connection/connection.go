@@ -26,6 +26,20 @@ func (s ConnectionState) String() string {
 	return ""
 }
 
+func getVtime(duration time.Duration) uint8 {
+	const (
+		MINTIMEOUT = 1
+		MAXTIMEOUT = 255
+	)
+	vtime := (duration.Nanoseconds() / 1e6 / 100)
+	if vtime < MINTIMEOUT {
+		vtime = MINTIMEOUT
+	} else if vtime > MAXTIMEOUT {
+		vtime = MAXTIMEOUT
+	}
+	return vtime, nil
+}
+
 type Serial struct {
 	deviceName string
 	baudRate   uint32
@@ -37,25 +51,17 @@ type Connection struct {
 	State  ConnectionState
 }
 
-func (c *Connection) convertTimeToPosix(duration time.Duration) (uint8, error) {
-
-	return 0, nil
-}
-
 func (c *Connection) setBaudRate(rate uint32) error {
-	vtime, err := c.convertTimeToPosix(connectionTimeout)
-	if err != nil {
-		return err
-	}
-
+	// Create the term IO settings structure
 	term := syscall.Termios{
 		Iflag:  syscall.IGNPAR,
 		Cflag:  syscall.CS8 | syscall.CREAD | syscall.CLOCAL | rate,
-		Cc:     [32]uint8{syscall.VMIN: 0, syscall.VTIME: vtime},
+		Cc:     [32]uint8{syscall.VMIN: 0, syscall.VTIME: getVtime(connectionTimeout)},
 		Ispeed: rate,
 		Ospeed: rate,
 	}
-
+	
+	// Make the IOCTL system call to configure the term
 	_, _, err = syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(c.file.Fd()),
@@ -65,10 +71,14 @@ func (c *Connection) setBaudRate(rate uint32) error {
 	if err != nil {
 		return err
 	}
+	
+	// Is this necessary?
+	/*
 	err = syscall.SetNonblock(int(c.file.Fd()), true)
 	if err != nil {
 		return err
 	}
+	*/
 
 	return nil
 }
@@ -88,20 +98,20 @@ func (c *Connection) Connect() error {
 	// TODO: I need to close this file
 
 	// Create a connection using a safe baud rate
-	c.setBaudRate(initialBaudRate)
+	err = c.setBaudRate(initialBaudRate)
 	if err != nil {
 		return err
 	}
 
 	// Perform handshake with EC
-	c.performHandshake()
+	err = c.performHandshake()
 	if err != nil {
 		return err
 	}
 
 	// Change baud rate to what was requested
 	/*
-	   c.setBaudRate(c.serial.baudRate)
+	   err = c.setBaudRate(c.serial.baudRate)
 	   if err != nil {
 	       return err
 	   }
@@ -118,5 +128,7 @@ func (c *Connection) String() string {
 }
 
 func New(ser Serial) (*Connection, error) {
-	return nil, nil
+	c := new(Connection)
+	c.serial = ser
+	return c, nil
 }
