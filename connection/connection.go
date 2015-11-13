@@ -129,6 +129,6 @@ func (c *Connection) String() string {
 
 func New(ser Serial) (*Connection, error) {
 	c := new(Connection)
-	c.serial = ser
+	c.serial = &ser
 	return c, nil
 }
