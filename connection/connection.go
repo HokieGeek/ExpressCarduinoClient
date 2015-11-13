@@ -37,7 +37,7 @@ func getVtime(duration time.Duration) uint8 {
 	} else if vtime > MAXTIMEOUT {
 		vtime = MAXTIMEOUT
 	}
-	return vtime, nil
+	return vtime
 }
 
 type Serial struct {
@@ -62,7 +62,7 @@ func (c *Connection) setBaudRate(rate uint32) error {
 	}
 	
 	// Make the IOCTL system call to configure the term
-	_, _, err = syscall.Syscall(
+	_, _, err := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(c.file.Fd()),
 		uintptr(syscall.TCSETS),
