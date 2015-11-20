@@ -1,7 +1,7 @@
 package connection
 
 import (
-	// "errors"
+	"errors"
 	"os"
 	"syscall"
 	"time"
