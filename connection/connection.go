@@ -37,7 +37,7 @@ func getVtime(duration time.Duration) uint8 {
 	} else if vtime > MAXTIMEOUT {
 		vtime = MAXTIMEOUT
 	}
-	return vtime
+	return uint8(vtime)
 }
 
 type Serial struct {
@@ -62,14 +62,14 @@ func (c *Connection) setBaudRate(rate uint32) error {
 	}
 	
 	// Make the IOCTL system call to configure the term
-	_, _, err := syscall.Syscall(
+	if _, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		uintptr(c.file.Fd()),
 		uintptr(syscall.TCSETS),
 		uintptr(unsafe.Pointer(&term)),
-	)
-	if err != nil {
-		return err
+	); errno != 0 {
+		// TODO: include errno in this
+		return errors.New("Encountered error doing IOCTL syscall")
 	}
 	
 	// Is this necessary?
