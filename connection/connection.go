@@ -1,8 +1,10 @@
 package connection
 
 import (
+	"bytes"
 	"errors"
 	"os"
+	// "strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -10,6 +12,8 @@ import (
 
 const initialBaudRate uint32 = syscall.B9600
 const connectionTimeout time.Duration = time.Second * 10
+const handshakeRequestChar byte = '.'
+const handshakeAckChar byte = ','
 
 type ConnectionState int
 
@@ -41,8 +45,8 @@ func getVtime(duration time.Duration) uint8 {
 }
 
 type Serial struct {
-	deviceName string
-	baudRate   uint32
+	DeviceName string
+	BaudRate   uint32
 }
 
 type Connection struct {
@@ -60,7 +64,7 @@ func (c *Connection) setBaudRate(rate uint32) error {
 		Ispeed: rate,
 		Ospeed: rate,
 	}
-	
+
 	// Make the IOCTL system call to configure the term
 	if _, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -71,13 +75,13 @@ func (c *Connection) setBaudRate(rate uint32) error {
 		// TODO: include errno in this
 		return errors.New("Encountered error doing IOCTL syscall")
 	}
-	
+
 	// Is this necessary?
 	/*
-	err = syscall.SetNonblock(int(c.file.Fd()), true)
-	if err != nil {
-		return err
-	}
+		err = syscall.SetNonblock(int(c.file.Fd()), true)
+		if err != nil {
+			return err
+		}
 	*/
 
 	return nil
@@ -85,13 +89,26 @@ func (c *Connection) setBaudRate(rate uint32) error {
 
 func (c *Connection) performHandshake() error {
 	// TODO: Look for handshake query byte and return response
+	buf := make([]byte, 1)
+	n, err := c.Read(buf)
+	if err != nil {
+		return err
+	}
+
+	if n > 0 && buf[0] == handshakeRequestChar { // TODO: do I care about the num bytes?
+		_, err = c.Write([]byte{handshakeAckChar})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (c *Connection) Connect() error {
 	// Open the file
 	var err error
-	c.file, err = os.OpenFile(c.serial.deviceName, syscall.O_RDWR|syscall.O_NOCTTY|syscall.O_NONBLOCK, 0666)
+	c.file, err = os.OpenFile(c.serial.DeviceName, syscall.O_RDWR|syscall.O_NOCTTY|syscall.O_NONBLOCK, 0666)
 	if err != nil {
 		return err
 	}
@@ -111,7 +128,7 @@ func (c *Connection) Connect() error {
 
 	// Change baud rate to what was requested
 	/*
-	   err = c.setBaudRate(c.serial.baudRate)
+	   err = c.setBaudRate(c.serial.BaudRate)
 	   if err != nil {
 	       return err
 	   }
@@ -120,15 +137,38 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
-func (c *Connection) String() string {
-	// Device name
-	// Baud rate
-	// State
-	return "TODO"
+func (c *Connection) Read(b []byte) (n int, err error) {
+	return c.file.Read(b)
 }
 
-func New(ser Serial) (*Connection, error) {
+func (c *Connection) Write(b []byte) (n int, err error) {
+	return c.file.Write(b)
+}
+
+func (c *Connection) String() string {
+	var buf bytes.Buffer
+
+	// Device name
+	buf.WriteString("Device: ")
+	buf.WriteString(c.serial.DeviceName)
+	buf.WriteString("\n")
+
+	// Baud rate
+	buf.WriteString("Baud rate: ")
+	buf.WriteString("TODO")
+	// buf.WriteString(strconv.Itoa(int(c.serial.BaudRate))) // TODO: whoops
+	buf.WriteString("\n")
+
+	// State
+	buf.WriteString("Connection state: ")
+	buf.WriteString(c.State.String())
+	buf.WriteString("\n")
+
+	return buf.String()
+}
+
+func New(ser *Serial) (*Connection, error) {
 	c := new(Connection)
-	c.serial = &ser
+	c.serial = ser
 	return c, nil
 }
