@@ -6,11 +6,56 @@ import (
 	"syscall"
 )
 
-func main() {
-	// TODO: store historical values?
-
+func connect(device string) (*connection.Connection, error) {
 	// Connect to the board
-	// s := &connection.Serial{DeviceName: "/dev/expresscarduino", BaudRate: syscall.B115200}
+	// s := &connection.Serial{DeviceName: device, BaudRate: syscall.B115200}
+	s := &connection.Serial{DeviceName: device, BaudRate: syscall.B9600}
+	conn, err := connection.New(s)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		conn.Disconnect()
+	}()
+
+	log.Printf("Establishing connection to device:\n%s\n", conn)
+	err = conn.Connect()
+	if err != nil {
+		// TODO: if no connection, keep trying periodically
+		return nil, err
+	}
+	log.Printf("Connected to device:\n%s\n", conn)
+
+	return conn, nil
+}
+
+func toggleData(conn *connection.Connection) error {
+	// TODO: store historical values?
+	_, err := conn.Write([]byte("T"))
+	if err != nil {
+		return err // TODO
+	}
+
+	return nil
+}
+
+// func main() {
+// log.Printf("Int: %
+
+func main() {
+	/*
+		// conn, err := connect("/dev/expresscarduino")
+		conn, err := connect("/dev/arduinoMetro328")
+		if err != nil {
+			panic(err) // TODO
+		}
+
+		toggleData(conn) // TODO: specify type of data to toggle
+	*/
+
+	// s := &connection.Serial{DeviceName: device, BaudRate: syscall.B115200}
+	// s := &connection.Serial{DeviceName: device, BaudRate: syscall.B9600}
 	s := &connection.Serial{DeviceName: "/dev/arduinoMetro328", BaudRate: syscall.B9600}
 	conn, err := connection.New(s)
 	if err != nil {
@@ -29,9 +74,10 @@ func main() {
 	}
 	log.Printf("Connected to device:\n%s\n", conn)
 
-	_, err = conn.Write([]byte("T"))
+	// Toggle button data
+	_, err = conn.Write([]byte("B"))
 	if err != nil {
-		log.Fatal("sigh")
+		panic(err)
 	}
 
 	// TODO: Kick off a routine that just reads bytes
@@ -43,12 +89,14 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if string(buf[:n]) == "T" {
+		if string(buf[:n]) == "B" {
 			n, err := conn.Read(buf)
+			log.Printf("Got %d bytes\n", n)
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Printf("%d", buf[:n])
+			// if buf[0] ==
+			log.Printf("Button: %d", buf[:n])
 		}
 
 		// log.Printf("(%d) %q", n, buf[:n])

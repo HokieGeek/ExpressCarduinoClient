@@ -13,6 +13,7 @@ import (
 const initialBaudRate uint32 = syscall.B9600
 const connectionTimeout time.Duration = time.Second * 10
 const handshakeRequestChar byte = ','
+const disconnectRequestChar byte = '.'
 const AckChar byte = ':'
 
 type ConnectionState int
@@ -91,28 +92,28 @@ func (c *Connection) setBaudRate(rate uint32) error {
 func (c *Connection) performHandshake() error {
 	c.State = Handshaking
 
-	// Initiate comms
-	// _, err := c.Write([]byte(" "))
-	// if err != nil {
-	// 	return err
-	// }
-
-	// TODO: Look for handshake query byte and return response
-	// buf := make([]byte, 1)
-	// n, err := c.Read(buf)
-	// if err != nil {
-	// 	return err
-	// }
-
 	_, err := c.Write([]byte{handshakeRequestChar})
-	// _, err = c.Write([]byte{handshakeAckChar, c.serial.BaudRate})
+	// _, err = c.Write([]byte{handshakeRequestChar, c.serial.BaudRate})
 	if err != nil {
 		return err
 	}
 
 	// Wait for AckChar
-	// if buf[0] == handshakeRequestChar { // TODO: do I care about the num bytes?
-	// }
+	const MAX_ATTEMPTS = 40
+	buf := make([]byte, 1)
+	var n int
+	var attempts int
+	for n <= 0 && attempts < MAX_ATTEMPTS {
+		n, err = c.Read(buf)
+		if err != nil {
+			return err
+		}
+		attempts++
+		time.Sleep(100 * time.Millisecond)
+	}
+	if buf[0] != AckChar {
+		return errors.New("Did not receive acknowledgment. Cannot connect")
+	}
 
 	return nil
 }
@@ -151,6 +152,11 @@ func (c *Connection) Connect() error {
 }
 
 func (c *Connection) Disconnect() (err error) {
+	_, err = c.Write([]byte{disconnectRequestChar})
+	// _, err = c.Write([]byte{handshakeRequestChar, c.serial.BaudRate})
+	if err != nil {
+		return err
+	}
 	return c.file.Close()
 }
 
