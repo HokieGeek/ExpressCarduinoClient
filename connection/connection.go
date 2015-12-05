@@ -137,6 +137,10 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
+func (c *Connection) Disconnect() (err error) {
+	return c.file.Close()
+}
+
 func (c *Connection) Read(b []byte) (n int, err error) {
 	return c.file.Read(b)
 }
