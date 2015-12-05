@@ -24,10 +24,15 @@ const (
 )
 
 func (s ConnectionState) String() string {
-	if s&Inactive == Inactive {
+	switch s {
+	case Inactive:
 		return "Inactive"
+	case Handshaking:
+		return "Handshaking"
+	case Active:
+		return "Active"
 	}
-	return ""
+	return "Unknown"
 }
 
 func getVtime(duration time.Duration) uint8 {
@@ -76,18 +81,22 @@ func (c *Connection) setBaudRate(rate uint32) error {
 		return errors.New("Encountered error doing IOCTL syscall")
 	}
 
-	// Is this necessary?
-	/*
-		err = syscall.SetNonblock(int(c.file.Fd()), true)
-		if err != nil {
-			return err
-		}
-	*/
+	if err := syscall.SetNonblock(int(c.file.Fd()), false); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (c *Connection) performHandshake() error {
+	c.State = Handshaking
+
+	// Initiate comms
+	_, err := c.Write([]byte(" "))
+	if err != nil {
+		return err
+	}
+
 	// TODO: Look for handshake query byte and return response
 	buf := make([]byte, 1)
 	n, err := c.Read(buf)
@@ -112,7 +121,6 @@ func (c *Connection) Connect() error {
 	if err != nil {
 		return err
 	}
-	// TODO: I need to close this file
 
 	// Create a connection using a safe baud rate
 	err = c.setBaudRate(initialBaudRate)
@@ -133,6 +141,8 @@ func (c *Connection) Connect() error {
 	       return err
 	   }
 	*/
+
+	c.State = Active
 
 	return nil
 }
