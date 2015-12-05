@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"os"
-	// "strconv"
+	"strconv"
 	"syscall"
 	"time"
 	"unsafe"
@@ -12,8 +12,8 @@ import (
 
 const initialBaudRate uint32 = syscall.B9600
 const connectionTimeout time.Duration = time.Second * 10
-const handshakeRequestChar byte = '.'
-const handshakeAckChar byte = ','
+const handshakeRequestChar byte = ','
+const AckChar byte = ':'
 
 type ConnectionState int
 
@@ -92,24 +92,27 @@ func (c *Connection) performHandshake() error {
 	c.State = Handshaking
 
 	// Initiate comms
-	_, err := c.Write([]byte(" "))
-	if err != nil {
-		return err
-	}
+	// _, err := c.Write([]byte(" "))
+	// if err != nil {
+	// 	return err
+	// }
 
 	// TODO: Look for handshake query byte and return response
-	buf := make([]byte, 1)
-	n, err := c.Read(buf)
+	// buf := make([]byte, 1)
+	// n, err := c.Read(buf)
+	// if err != nil {
+	// 	return err
+	// }
+
+	_, err := c.Write([]byte{handshakeRequestChar})
+	// _, err = c.Write([]byte{handshakeAckChar, c.serial.BaudRate})
 	if err != nil {
 		return err
 	}
 
-	if n > 0 && buf[0] == handshakeRequestChar { // TODO: do I care about the num bytes?
-		_, err = c.Write([]byte{handshakeAckChar})
-		if err != nil {
-			return err
-		}
-	}
+	// Wait for AckChar
+	// if buf[0] == handshakeRequestChar { // TODO: do I care about the num bytes?
+	// }
 
 	return nil
 }
@@ -170,7 +173,7 @@ func (c *Connection) String() string {
 	// Baud rate
 	buf.WriteString("Baud rate: ")
 	buf.WriteString("TODO")
-	// buf.WriteString(strconv.Itoa(int(c.serial.BaudRate))) // TODO: whoops
+	buf.WriteString(strconv.Itoa(int(c.serial.BaudRate))) // TODO: whoops
 	buf.WriteString("\n")
 
 	// State
