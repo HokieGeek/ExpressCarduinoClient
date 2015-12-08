@@ -108,7 +108,7 @@ func main() {
 				log.Fatal(err)
 			}
 			
-			log.Prnitf("Button: %d", val)
+			log.Print("Button: %d", val)
 		}
 
 		// log.Printf("(%d) %q", n, buf[:n])
