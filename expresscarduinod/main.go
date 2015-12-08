@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"github.com/hokiegeek/ExpressCarduinoDaemon/connection"
 	"log"
 	"syscall"
@@ -82,21 +84,31 @@ func main() {
 
 	// TODO: Kick off a routine that just reads bytes
 	log.Printf("Reading stream...\n")
-	buf := make([]byte, 128)
+	cmd := make([]byte, 1)
 	for conn.State == connection.Active {
-		n, err := conn.Read(buf)
+		n, err := conn.Read(cmd)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if string(buf[:n]) == "B" {
+		if string(cmd[:n]) == "B" {
+			buf := make([]byte, 2)
 			n, err := conn.Read(buf)
 			log.Printf("Got %d bytes\n", n)
 			if err != nil {
 				log.Fatal(err)
 			}
-			// if buf[0] ==
-			log.Printf("Button: %d", buf[:n])
+			if n != 2 {
+				log.Fatal("Did not read correct number of bytes!")
+			}
+			
+			var val int16
+			n, err = binary.LittleEndian.PutUint16(buf, uint16(val)) // Arduino is little endian, like most uCs
+			if err != nil {
+				log.Fatal(err)
+			}
+			
+			log.Prnitf("Button: %d", val)
 		}
 
 		// log.Printf("(%d) %q", n, buf[:n])
