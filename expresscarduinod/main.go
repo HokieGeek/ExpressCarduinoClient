@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"github.com/hokiegeek/ExpressCarduinoDaemon/connection"
 	"log"
@@ -103,11 +102,7 @@ func main() {
 			}
 			
 			var val int16
-			n, err = binary.LittleEndian.PutUint16(buf, uint16(val)) // Arduino is little endian, like most uCs
-			if err != nil {
-				log.Fatal(err)
-			}
-			
+			binary.LittleEndian.PutUint16(buf, uint16(val)) // Arduino is little endian, like most uCs
 			log.Print("Button: %d", val)
 		}
 
